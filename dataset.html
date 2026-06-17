@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set title = "Dataset" %}
+
+{% block content %}
+<main class="page">
+    <div class="page-title page-title-row">
+        <div>
+            <p class="eyebrow">Data workspace</p>
+            <h1>Dataset Browser</h1>
+            <p>Review county-level records used by the predictor.</p>
+        </div>
+        <a class="btn secondary" href="{{ url_for('predict') }}">Run Prediction</a>
+    </div>
+
+    <section class="form-card compact">
+        <div class="card-section-header">
+            <div>
+                <h2>Filter Records</h2>
+                <p>Narrow the dataset by state.</p>
+            </div>
+        </div>
+        <form class="filter-form" method="get">
+            <div class="form-group">
+                <label for="state">State</label>
+                <select id="state" name="state">
+                    <option value="">All states</option>
+                    {% for state in states %}
+                        <option value="{{ state }}" {{ 'selected' if selected_state == state else '' }}>{{ state }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-actions">
+                <button class="btn primary" type="submit">Filter</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="table-card">
+        <div class="table-header">
+            <div>
+                <h2>County Records</h2>
+                <p>Showing {{ rows|length }} of {{ total }}</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>County</th>
+                        <th>Population</th>
+                        <th>Vaccinated</th>
+                        <th>Density</th>
+                        <th>SVI Rank</th>
+                        <th>Uninsured</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td>{{ row.county }}, {{ row.state }}</td>
+                            <td>{{ row.total_population }}</td>
+                            <td>{{ row.percent_vaccinated }}%</td>
+                            <td>{{ row.population_density_per_sqmi }}</td>
+                            <td>{{ row.percentile_rank_social_vulnerability }}</td>
+                            <td>{{ row.percent_uninsured }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+{% endblock %}
