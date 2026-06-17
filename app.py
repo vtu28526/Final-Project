@@ -530,8 +530,8 @@ def upsert_google_user(profile):
 
 
 def google_oauth_configured():
-    client_id = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
-    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
+    client_id = get_google_client_id()
+    client_secret = get_google_client_secret()
     placeholder_values = {
         "your-google-oauth-client-id.apps.googleusercontent.com",
         "your-google-oauth-client-secret",
@@ -539,8 +539,16 @@ def google_oauth_configured():
     return bool(client_id and client_secret) and client_id not in placeholder_values and client_secret not in placeholder_values
 
 
+def get_google_client_id():
+    return os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+
+
+def get_google_client_secret():
+    return os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
+
+
 def get_google_redirect_uri():
-    return os.environ.get("GOOGLE_REDIRECT_URI") or url_for("google_callback", _external=True)
+    return os.environ.get("GOOGLE_REDIRECT_URI", "").strip() or url_for("google_callback", _external=True)
 
 
 def is_safe_redirect_target(target):
@@ -556,8 +564,8 @@ def fetch_google_profile(code, redirect_uri):
     token_payload = urllib.parse.urlencode(
         {
             "code": code,
-            "client_id": os.environ["GOOGLE_CLIENT_ID"],
-            "client_secret": os.environ["GOOGLE_CLIENT_SECRET"],
+            "client_id": get_google_client_id(),
+            "client_secret": get_google_client_secret(),
             "redirect_uri": redirect_uri,
             "grant_type": "authorization_code",
         }
@@ -626,7 +634,12 @@ def signup():
             next_page = request.args.get("next")
             return redirect(next_page if is_safe_redirect_target(next_page) else url_for("home"))
 
-    return render_template("signup.html", active_page="signup", form=form)
+    return render_template(
+        "signup.html",
+        active_page="signup",
+        form=form,
+        google_oauth_enabled=google_oauth_configured(),
+    )
 
 
 @app.route("/signin", methods=["GET", "POST"])
@@ -649,7 +662,12 @@ def signin():
 
         flash("Invalid email or password.", "error")
 
-    return render_template("signin.html", active_page="signin", email=email)
+    return render_template(
+        "signin.html",
+        active_page="signin",
+        email=email,
+        google_oauth_enabled=google_oauth_configured(),
+    )
 
 
 @app.route("/logout")
@@ -674,7 +692,7 @@ def google_auth():
     redirect_uri = get_google_redirect_uri()
     query = urllib.parse.urlencode(
         {
-            "client_id": os.environ["GOOGLE_CLIENT_ID"],
+            "client_id": get_google_client_id(),
             "redirect_uri": redirect_uri,
             "response_type": "code",
             "scope": "openid email profile",
